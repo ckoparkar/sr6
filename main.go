@@ -7,14 +7,8 @@ import (
 )
 
 func main() {
-	s := new(Server)
+	s := NewServer()
 	http.Handle("/", s)
+	fmt.Printf("Listening for requests on %d...\n", 8080)
 	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-type Server struct {
-}
-
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello")
 }
