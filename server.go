@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
 )
@@ -26,18 +24,20 @@ type Response struct {
 }
 
 type Heartbeat struct {
-	ID      int    `json:"id"`
+	ID      string `json:"id"`
 	Address string `json:"address"`
 	MemUsed string `json:"mem_used"`
 }
 
 type Server struct {
-	ID int
+	ID string
 }
 
 func NewServer() *Server {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	id := r.Int() % 99
+	id, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &Server{
 		ID: id,
 	}
