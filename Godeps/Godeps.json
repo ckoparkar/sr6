@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/cskksc/minion",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudfoundry/gosigar",
+			"Comment": "scotty_09012012-27-g3ed7c74",
+			"Rev": "3ed7c74352dae6dc00bdc8c74045375352e3ec05"
+		}
+	]
+}
