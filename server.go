@@ -10,6 +10,8 @@ import (
 	"os"
 	"regexp"
 	"time"
+
+	sigar "github.com/cloudfoundry/gosigar"
 )
 
 var (
@@ -26,6 +28,7 @@ type Response struct {
 type Heartbeat struct {
 	ID      int    `json:"id"`
 	Address string `json:"address"`
+	MemUsed string `json:"mem_used"`
 }
 
 type Server struct {
@@ -50,26 +53,30 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 	ip, err := internalIP()
 	if err != nil {
-		s.serveError(w, r, err)
+		s.serveError(w, r, err, http.StatusNotFound)
 		return
 	}
+	memUsed := memUsage()
 	beat := Heartbeat{
 		ID:      s.ID,
 		Address: ip,
+		MemUsed: memUsed,
 	}
 	resp := Response{
 		Payload: beat,
 		Status:  http.StatusOK,
 		Message: "success",
 	}
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error) {
+func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, status int) {
 	resp := Response{
-		Status:  http.StatusInternalServerError,
+		Status:  status,
 		Message: err.Error(),
 	}
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -91,4 +98,11 @@ func internalIP() (string, error) {
 	}
 
 	return "", ErrNotFound
+}
+
+func memUsage() string {
+	mem := sigar.Mem{}
+	mem.Get()
+	used := float64(mem.ActualUsed) / (float64(mem.ActualFree) + float64(mem.ActualUsed)) * 100
+	return fmt.Sprintf("%.2f%%", used)
 }
