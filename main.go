@@ -13,7 +13,7 @@ var (
 
 func main() {
 	flag.Parse()
-	s := new(Server)
+	s := NewServer()
 	http.Handle("/", s)
 	fmt.Printf("Listening for requests on %s...\n", *listenAddr)
 	log.Fatal(http.ListenAndServe(*listenAddr, nil))
