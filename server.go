@@ -7,11 +7,11 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 
 	sigar "github.com/cloudfoundry/gosigar"
+	"github.com/cskksc/minion/request"
 )
 
 var (
@@ -93,31 +93,17 @@ func register(id string) error {
 	if err != nil {
 		return err
 	}
-	u := &url.URL{
-		Scheme: "http",
-		Host:   "localhost:8082",
-		Path:   "/register",
-	}
-
 	buf, err := json.Marshal(beat)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
-	if err != nil {
-		return err
-	}
-	req.URL.Host = u.Host
-	req.URL.Scheme = u.Scheme
-	req.Host = u.Host
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	req := request.NewRequest("POST", "http", "localhost:8082", "/register", bytes.NewReader(buf), nil)
+	rtt, resp, err := req.Do()
 	if err != nil {
 		return err
 	}
 	fmt.Println(resp)
-
+	fmt.Printf("rtt: %s\n", rtt)
 	return nil
 }
 
