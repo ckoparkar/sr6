@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sync"
+	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/cskksc/minion/request"
@@ -27,6 +29,9 @@ type Response struct {
 
 type Server struct {
 	ID string
+
+	mu       sync.RWMutex
+	lastPoll time.Time
 }
 
 func NewServer() *Server {
@@ -34,8 +39,25 @@ func NewServer() *Server {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &Server{
+
+	s := &Server{
 		ID: id,
+	}
+	go s.monitor()
+}
+
+// Runs in its own go routine
+// If last poll request from master was over a minute ago,
+// try to re-register (depends on poll interval of master)
+func (s *Server) monitor() {
+	ticker := time.NewTicker(time.Minute)
+	for range ticker.C {
+		now := time.Now()
+		if now.Sub(s.lastPoll) > time.Minute {
+			if err := register(s.ID); err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }
 
@@ -45,7 +67,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+	s.lastPoll = time.Now()
+
 	beat, err := NewHeartbeat(s.ID)
 	if err != nil {
 		s.serveError(w, r, err, http.StatusNotFound)
