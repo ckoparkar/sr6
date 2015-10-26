@@ -21,47 +21,46 @@ func NewServer() *Server {
 	s := &Server{
 		followers: make([]Heartbeat, 0),
 	}
-	go s.poll()
-	go s.inspect()
+	go s.run()
 	return s
 }
 
-func (s *Server) inspect() {
-	for {
-		time.Sleep(10 * time.Second)
-		s.mu.RLock()
-		fmt.Println(s.followers)
-		s.mu.RUnlock()
+func (s *Server) run() {
+	ticker := time.NewTicker(10 * time.Second)
+	for range ticker.C {
+		s.poll()
+		s.inspect()
 	}
 }
 
-func (s *Server) poll() {
-	for {
-		time.Sleep(10 * time.Second)
-		s.mu.Lock()
-		ping := make(chan int)
-		for i := len(s.followers) - 1; i >= 0; i-- {
-			f := s.followers[i]
-			hostport := fmt.Sprintf("%s:8080", f.Address)
-			go func() {
-				req := request.NewRequest("GET", "http", hostport, "/heartbeat", nil, nil)
-				rtt, resp, err := req.Do()
-				if err != nil {
-					log.Println(err)
-				}
-				fmt.Println(rtt)
-				fmt.Println(resp)
-				ping <- 1
-			}()
+func (s *Server) inspect() {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	fmt.Println(s.followers)
+}
 
-			select {
-			case <-ping:
-			case <-time.After(10 * time.Millisecond):
-				// delete this element
-				s.followers = append(s.followers[:i], s.followers[i+1:]...)
+func (s *Server) poll() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ping := make(chan int)
+	for i := len(s.followers) - 1; i >= 0; i-- {
+		f := s.followers[i]
+		hostport := fmt.Sprintf("%s:8080", f.Address)
+		go func() {
+			req := request.NewRequest("GET", "http", hostport, "/heartbeat", nil, nil)
+			_, _, err := req.Do()
+			if err != nil {
+				log.Println(err)
 			}
+			ping <- 1
+		}()
+
+		select {
+		case <-ping:
+		case <-time.After(10 * time.Millisecond):
+			// delete this element
+			s.followers = append(s.followers[:i], s.followers[i+1:]...)
 		}
-		s.mu.Unlock()
 	}
 }
 
@@ -76,7 +75,6 @@ func (s *Server) registerFollower(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	var beat Heartbeat
 	json.Unmarshal(body, &beat)
-	fmt.Println(beat)
 
 	s.mu.RLock()
 	for _, f := range s.followers {
@@ -91,7 +89,6 @@ func (s *Server) registerFollower(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 
 	s.followers = append(s.followers, beat)
-	fmt.Println(s.followers)
 }
 
 type Heartbeat struct {
