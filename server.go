@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 
@@ -43,7 +45,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
 func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 	beat, err := NewHeartbeat(s.ID)
 	if err != nil {
@@ -85,6 +86,39 @@ func NewHeartbeat(id string) (*Heartbeat, error) {
 		Address: ip,
 		MemUsed: memUsed,
 	}, nil
+}
+
+func register(id string) error {
+	beat, err := NewHeartbeat(id)
+	if err != nil {
+		return err
+	}
+	u := &url.URL{
+		Scheme: "http",
+		Host:   "localhost:8082",
+		Path:   "/register",
+	}
+
+	buf, err := json.Marshal(beat)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	req.URL.Host = u.Host
+	req.URL.Scheme = u.Scheme
+	req.Host = u.Host
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp)
+
+	return nil
 }
 
 func internalIP() (string, error) {
