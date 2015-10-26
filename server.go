@@ -23,12 +23,6 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-type Heartbeat struct {
-	ID      string `json:"id"`
-	Address string `json:"address"`
-	MemUsed string `json:"mem_used"`
-}
-
 type Server struct {
 	ID string
 }
@@ -51,16 +45,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
-	ip, err := internalIP()
+	beat, err := NewHeartbeat(s.ID)
 	if err != nil {
 		s.serveError(w, r, err, http.StatusNotFound)
 		return
-	}
-	memUsed := memUsage()
-	beat := Heartbeat{
-		ID:      s.ID,
-		Address: ip,
-		MemUsed: memUsed,
 	}
 	resp := Response{
 		Payload: beat,
@@ -78,6 +66,25 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 	}
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(resp)
+}
+
+type Heartbeat struct {
+	ID      string `json:"id"`
+	Address string `json:"address"`
+	MemUsed string `json:"mem_used"`
+}
+
+func NewHeartbeat(id string) (*Heartbeat, error) {
+	ip, err := internalIP()
+	if err != nil {
+		return nil, err
+	}
+	memUsed := memUsage()
+	return &Heartbeat{
+		ID:      id,
+		Address: ip,
+		MemUsed: memUsed,
+	}, nil
 }
 
 func internalIP() (string, error) {
