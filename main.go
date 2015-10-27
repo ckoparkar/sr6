@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
-	listenAddr = flag.String("listen", ":8080", "HTTP listen adddress.")
+	listenAddr   = flag.String("listen", ":8080", "HTTP listen adddress.")
+	pollInterval = flag.Duration("poll", 5*time.Minute, "Registers itself with master, every `t`.")
 )
 
 func main() {

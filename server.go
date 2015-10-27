@@ -47,14 +47,15 @@ func NewServer() *Server {
 }
 
 // Runs in its own go routine
-// If last poll request from master was over a minute ago,
+// If last poll request from master was over *pollInterval* ago,
 // try to re-register (depends on poll interval of master)
 func (s *Server) monitor() {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(*pollInterval)
 	for range ticker.C {
 		now := time.Now()
 		if now.Sub(s.lastPoll) > time.Minute {
 			if err := register(s.ID); err != nil {
+				// If we cannot re-register, bail out
 				log.Fatal(err)
 			}
 		}
@@ -158,5 +159,5 @@ func memUsage() string {
 	mem := sigar.Mem{}
 	mem.Get()
 	used := float64(mem.ActualUsed) / (float64(mem.ActualFree) + float64(mem.ActualUsed)) * 100
-	return fmt.Sprintf("%.2f%%", used)
+	return fmt.Sprintf("%.2f", used)
 }
