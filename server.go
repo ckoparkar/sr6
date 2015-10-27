@@ -16,6 +16,10 @@ import (
 	"github.com/cskksc/minion/request"
 )
 
+const (
+	masterPort = ":8281"
+)
+
 var (
 	ErrNotFound = fmt.Errorf("Not found.")
 )
@@ -44,6 +48,7 @@ func NewServer() *Server {
 		ID: id,
 	}
 	go s.monitor()
+	return s
 }
 
 // Runs in its own go routine
@@ -70,8 +75,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.lastPoll = time.Now()
 
 	beat, err := NewHeartbeat(s.ID)
@@ -125,13 +130,13 @@ func register(id string) error {
 	if err != nil {
 		return err
 	}
-	req := request.NewRequest("POST", "http", "localhost:8082", "/register", bytes.NewReader(buf), nil)
-	rtt, resp, err := req.Do()
+	hostport := *masterAddr + masterPort
+	req := request.NewRequest("POST", "http", hostport, "/register", bytes.NewReader(buf), nil)
+	_, _, err = req.Do()
 	if err != nil {
 		return err
 	}
-	fmt.Println(resp)
-	fmt.Printf("rtt: %s\n", rtt)
+	log.Printf("Registered successfully with %s.\n", hostport)
 	return nil
 }
 
