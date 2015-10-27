@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cskksc/sr6/request"
 	"github.com/cskksc/sr6/types"
 )
 
@@ -53,24 +52,9 @@ func (s *Server) inspect() {
 func (s *Server) poll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	ping := make(chan int)
 	for i := len(s.followers) - 1; i >= 0; i-- {
 		f := s.followers[i]
-		hostport := f.Address + *followerPort
-		timeout := time.After(10 * time.Millisecond)
-		go func() {
-			req := request.NewRequest("GET", "http", hostport, "/heartbeat", nil, nil)
-			_, _, err := req.Do()
-			if err != nil {
-				<-timeout
-			} else {
-				ping <- 1
-			}
-		}()
-
-		select {
-		case <-ping:
-		case <-time.After(10 * time.Millisecond):
+		if err := f.Ping(); err != nil {
 			// delete this element
 			s.followers = append(s.followers[:i], s.followers[i+1:]...)
 			log.Printf("De-registered %#v\n", f)

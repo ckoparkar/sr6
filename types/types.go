@@ -7,8 +7,10 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
+	"github.com/cskksc/sr6/request"
 )
 
 var ErrNotFound = fmt.Errorf("Not found.")
@@ -59,7 +61,7 @@ type Follower struct {
 	MemUsed string `json:"mem_used"`
 }
 
-func NewFollower(id string) (*Follower, error) {
+func NewFollower(id, listenAddr string) (*Follower, error) {
 	ip, err := internalIP()
 	if err != nil {
 		return nil, err
@@ -67,9 +69,27 @@ func NewFollower(id string) (*Follower, error) {
 	memUsed := memUsage()
 	return &Follower{
 		ID:      id,
-		Address: ip,
+		Address: ip + listenAddr,
 		MemUsed: memUsed,
 	}, nil
+}
+
+func (f *Follower) Ping() error {
+	ping := make(chan int)
+	go func() {
+		req := request.NewRequest("GET", "http", f.Address, "/heartbeat", nil, nil)
+		_, _, err := req.Do()
+		if err == nil {
+			ping <- 1
+		}
+	}()
+
+	select {
+	case <-ping:
+	case <-time.After(10 * time.Millisecond):
+		return ErrNotFound
+	}
+	return nil
 }
 
 func internalIP() (string, error) {

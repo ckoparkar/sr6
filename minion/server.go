@@ -64,7 +64,7 @@ func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 	s.lastPoll = time.Now()
 
-	f, err := types.NewFollower(s.ID)
+	f, err := types.NewFollower(s.ID, *listenAddr)
 	if err != nil {
 		s.serveError(w, r, err, http.StatusNotFound)
 		return
@@ -88,7 +88,7 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 }
 
 func register(id string) error {
-	f, err := types.NewFollower(id)
+	f, err := types.NewFollower(id, *listenAddr)
 	if err != nil {
 		return err
 	}
@@ -106,6 +106,9 @@ func register(id string) error {
 	var rr types.RegisterResponse
 	json.Unmarshal(body, &rr)
 	fmt.Println(rr)
+
+	// Change our hostname, add ssh keys to proper files
+	// TODO(cskksc)
 
 	log.Printf("Registered successfully with %s.\n", *masterAddr)
 	return nil

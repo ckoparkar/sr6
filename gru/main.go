@@ -15,7 +15,6 @@ var (
 	sshPublicKeyPath  = flag.String("ssh-public-key", "~/.ssh/id_rsa.pub", "Path to SSH public key.")
 	// must contain ID
 	hostnamePattern = flag.String("hostname", "minionID", "ID in `S` is replaced with actual ids.")
-	followerPort    = flag.String("follower-port", ":8282", "Port on which all follower servers run.")
 )
 
 func main() {
