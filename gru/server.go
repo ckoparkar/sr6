@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -114,6 +115,7 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 		PollInterval: pollInterval.String(),
 		Status:       http.StatusOK,
 	}
+	json.NewEncoder(os.Stdout).Encode(resp)
 	json.NewEncoder(w).Encode(resp)
 
 	// Add the follower to list

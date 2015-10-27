@@ -14,7 +14,7 @@ import (
 var ErrNotFound = fmt.Errorf("Not found.")
 
 type SSHKeys struct {
-	private, public []byte
+	Private, Public string
 }
 
 func NewSSHKeys(sshPrivateKeyPath, sshPublicKeyPath string) (*SSHKeys, error) {
@@ -27,8 +27,8 @@ func NewSSHKeys(sshPrivateKeyPath, sshPublicKeyPath string) (*SSHKeys, error) {
 		return nil, err
 	}
 	return &SSHKeys{
-		private: privateKey,
-		public:  publicKey,
+		Private: string(privateKey),
+		Public:  string(publicKey),
 	}, nil
 }
 
