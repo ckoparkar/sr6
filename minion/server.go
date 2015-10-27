@@ -18,6 +18,9 @@ import (
 type Server struct {
 	ID string
 
+	restartMonitor chan int
+	pollInterval   time.Duration
+
 	mu       sync.RWMutex
 	lastPoll time.Time
 }
@@ -30,6 +33,9 @@ func NewServer() *Server {
 
 	s := &Server{
 		ID: id,
+
+		restartMonitor: make(chan int),
+		pollInterval:   time.Minute,
 	}
 	go s.monitor()
 	return s
@@ -39,15 +45,21 @@ func NewServer() *Server {
 // If last poll request from master was over *pollInterval* ago,
 // try to re-register (depends on poll interval of master)
 func (s *Server) monitor() {
-	ticker := time.NewTicker(*pollInterval)
-	for range ticker.C {
-		now := time.Now()
-		// if we dint receive poll for 5 cycles, re-register
-		if now.Sub(s.lastPoll) > (*pollInterval * 5) {
-			if err := register(s.ID); err != nil {
-				// If we cannot re-register, bail out
-				log.Fatal(err)
+	fmt.Println(s.pollInterval)
+	ticker := time.NewTicker(s.pollInterval)
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			// if we dint receive poll for 5 cycles, re-register
+			if now.Sub(s.lastPoll) > (s.pollInterval * 2) {
+				if err := s.register(); err != nil {
+					// If we cannot re-register, bail out
+					log.Fatal(err)
+				}
 			}
+		case <-s.restartMonitor:
+			return
 		}
 	}
 }
@@ -87,8 +99,8 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 	json.NewEncoder(w).Encode(resp)
 }
 
-func register(id string) error {
-	f, err := types.NewFollower(id, *listenAddr)
+func (s *Server) register() error {
+	f, err := types.NewFollower(s.ID, *listenAddr)
 	if err != nil {
 		return err
 	}
@@ -109,6 +121,14 @@ func register(id string) error {
 
 	// Change our hostname, add ssh keys to proper files
 	// TODO(cskksc)
+
+	// Set our poll interval
+	pi, err := time.ParseDuration(rr.PollInterval)
+	if s.pollInterval != pi && err == nil {
+		s.pollInterval = pi
+		s.restartMonitor <- 1
+		go s.monitor()
+	}
 
 	log.Printf("Registered successfully with %s.\n", *masterAddr)
 	return nil
