@@ -1,3 +1,3 @@
-# dru
+# sr6
 
-Controls the minions.
+Enables auto-scaling for storm.
