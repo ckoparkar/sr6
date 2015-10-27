@@ -4,21 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
-	"regexp"
 	"sync"
 	"time"
 
-	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/cskksc/sr6/request"
 	"github.com/cskksc/sr6/types"
-)
-
-var (
-	ErrNotFound = fmt.Errorf("Not found.")
 )
 
 type Server struct {
@@ -70,15 +64,15 @@ func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 	s.lastPoll = time.Now()
 
-	f, err := NewFollower(s.ID)
+	f, err := types.NewFollower(s.ID)
 	if err != nil {
 		s.serveError(w, r, err, http.StatusNotFound)
 		return
 	}
-	resp := types.BaseResponse{
-		Payload: f,
-		Status:  http.StatusOK,
-		Message: "success",
+	resp := types.HeartbeatResponse{
+		Follower: f,
+		Status:   http.StatusOK,
+		Message:  "success",
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
@@ -93,21 +87,8 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 	json.NewEncoder(w).Encode(resp)
 }
 
-func NewFollower(id string) (*types.Follower, error) {
-	ip, err := internalIP()
-	if err != nil {
-		return nil, err
-	}
-	memUsed := memUsage()
-	return &types.Follower{
-		ID:      id,
-		Address: ip,
-		MemUsed: memUsed,
-	}, nil
-}
-
 func register(id string) error {
-	f, err := NewFollower(id)
+	f, err := types.NewFollower(id)
 	if err != nil {
 		return err
 	}
@@ -116,37 +97,16 @@ func register(id string) error {
 		return err
 	}
 	req := request.NewRequest("POST", "http", *masterAddr, "/register", bytes.NewReader(buf), nil)
-	_, _, err = req.Do()
+	_, resp, err := req.Do()
 	if err != nil {
 		return err
 	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	var rr types.RegisterResponse
+	json.Unmarshal(body, &rr)
+	fmt.Println(rr)
+
 	log.Printf("Registered successfully with %s.\n", *masterAddr)
 	return nil
-}
-
-func internalIP() (string, error) {
-	re := regexp.MustCompile("[0-9]+.[0-9]+.[0-9]+.[0-9]+")
-	name, err := os.Hostname()
-	if err != nil {
-		log.Printf("Couldn't get IP, %v", err)
-	}
-
-	addrs, err := net.LookupHost(name)
-	if err != nil {
-		log.Printf("Couldn't get IP, %v", err)
-	}
-	for _, a := range addrs {
-		if ip := re.FindString(a); ip != "" {
-			return ip, nil
-		}
-	}
-
-	return "", ErrNotFound
-}
-
-func memUsage() string {
-	mem := sigar.Mem{}
-	mem.Get()
-	used := float64(mem.ActualUsed) / (float64(mem.ActualFree) + float64(mem.ActualUsed)) * 100
-	return fmt.Sprintf("%.2f", used)
 }

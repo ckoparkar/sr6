@@ -16,33 +16,14 @@ import (
 	"github.com/cskksc/sr6/types"
 )
 
-type SSHKeys struct {
-	private, public []byte
-}
-
-func NewSSHKeys() (*SSHKeys, error) {
-	privateKey, err := ioutil.ReadFile(*sshPrivateKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	publicKey, err := ioutil.ReadFile(*sshPublicKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	return &SSHKeys{
-		private: privateKey,
-		public:  publicKey,
-	}, nil
-}
-
 type Server struct {
-	sshKeys   SSHKeys
+	sshKeys   types.SSHKeys
 	mu        sync.RWMutex
 	followers []types.Follower
 }
 
 func NewServer() (*Server, error) {
-	keys, err := NewSSHKeys()
+	keys, err := types.NewSSHKeys(*sshPrivateKeyPath, *sshPublicKeyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +108,13 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	// We have a new follower. Send ssh and host information
 	lastID++
 	hostname := strings.Replace(*hostnamePattern, "ID", strconv.Itoa(lastID), -1)
-	fmt.Println(hostname)
+	resp := types.RegisterResponse{
+		Hostname:     hostname,
+		SSHKeys:      s.sshKeys,
+		PollInterval: pollInterval.String(),
+		Status:       http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(resp)
 
 	// Add the follower to list
 	s.mu.Lock()
