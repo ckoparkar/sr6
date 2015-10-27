@@ -12,6 +12,10 @@ import (
 	"github.com/cskksc/minion/request"
 )
 
+const (
+	followerPort = ":8282"
+)
+
 type Server struct {
 	mu        sync.RWMutex
 	followers []Heartbeat
@@ -26,7 +30,7 @@ func NewServer() *Server {
 }
 
 func (s *Server) run() {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(*pollInterval)
 	for range ticker.C {
 		s.poll()
 		s.inspect()
@@ -45,7 +49,7 @@ func (s *Server) poll() {
 	ping := make(chan int)
 	for i := len(s.followers) - 1; i >= 0; i-- {
 		f := s.followers[i]
-		hostport := fmt.Sprintf("%s:8080", f.Address)
+		hostport := f.Address + ":8080"
 		go func() {
 			req := request.NewRequest("GET", "http", hostport, "/heartbeat", nil, nil)
 			_, _, err := req.Do()
