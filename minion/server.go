@@ -48,7 +48,8 @@ func (s *Server) monitor() {
 	ticker := time.NewTicker(*pollInterval)
 	for range ticker.C {
 		now := time.Now()
-		if now.Sub(s.lastPoll) > time.Minute {
+		// if we dint receive poll for 5 cycles, re-register
+		if now.Sub(s.lastPoll) > (*pollInterval * 5) {
 			if err := register(s.ID); err != nil {
 				// If we cannot re-register, bail out
 				log.Fatal(err)
@@ -69,13 +70,13 @@ func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 	s.lastPoll = time.Now()
 
-	beat, err := NewHeartbeat(s.ID)
+	f, err := NewFollower(s.ID)
 	if err != nil {
 		s.serveError(w, r, err, http.StatusNotFound)
 		return
 	}
 	resp := types.BaseResponse{
-		Payload: beat,
+		Payload: f,
 		Status:  http.StatusOK,
 		Message: "success",
 	}
@@ -92,13 +93,13 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 	json.NewEncoder(w).Encode(resp)
 }
 
-func NewHeartbeat(id string) (*types.Heartbeat, error) {
+func NewFollower(id string) (*types.Follower, error) {
 	ip, err := internalIP()
 	if err != nil {
 		return nil, err
 	}
 	memUsed := memUsage()
-	return &types.Heartbeat{
+	return &types.Follower{
 		ID:      id,
 		Address: ip,
 		MemUsed: memUsed,
@@ -106,11 +107,11 @@ func NewHeartbeat(id string) (*types.Heartbeat, error) {
 }
 
 func register(id string) error {
-	beat, err := NewHeartbeat(id)
+	f, err := NewFollower(id)
 	if err != nil {
 		return err
 	}
-	buf, err := json.Marshal(beat)
+	buf, err := json.Marshal(f)
 	if err != nil {
 		return err
 	}

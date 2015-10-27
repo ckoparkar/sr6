@@ -7,7 +7,7 @@ type BaseResponse struct {
 	Message string `json:"message"`
 }
 
-type Heartbeat struct {
+type Follower struct {
 	ID      string `json:"id"`
 	Address string `json:"address"`
 	MemUsed string `json:"mem_used"`

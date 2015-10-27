@@ -38,7 +38,7 @@ func NewSSHKeys() (*SSHKeys, error) {
 type Server struct {
 	sshKeys   SSHKeys
 	mu        sync.RWMutex
-	followers []types.Heartbeat
+	followers []types.Follower
 }
 
 func NewServer() (*Server, error) {
@@ -48,7 +48,7 @@ func NewServer() (*Server, error) {
 	}
 	s := &Server{
 		sshKeys:   *keys,
-		followers: make([]types.Heartbeat, 0),
+		followers: make([]types.Follower, 0),
 	}
 	go s.run()
 	return s, nil
@@ -105,17 +105,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
-	var beat types.Heartbeat
-	json.Unmarshal(body, &beat)
+	var f types.Follower
+	json.Unmarshal(body, &f)
 
 	re := regexp.MustCompile("[[:digit:]]+")
 	lastID := -1
 	// Check if follower already exists.
 	s.mu.RLock()
-	for _, f := range s.followers {
-		if f.ID == beat.ID {
+	// cf -> currentFollower
+	for _, cf := range s.followers {
+		if cf.ID == f.ID {
 			// capture ids here to determine next
-			lastID, _ = strconv.Atoi(re.FindString(f.ID))
+			lastID, _ = strconv.Atoi(re.FindString(cf.ID))
 
 			// follower is already present
 			return
@@ -131,6 +132,6 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	// Add the follower to list
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.followers = append(s.followers, beat)
-	log.Printf("Registered %#v\n", beat)
+	s.followers = append(s.followers, f)
+	log.Printf("Registered %#v\n", f)
 }
