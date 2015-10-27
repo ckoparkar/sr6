@@ -49,7 +49,7 @@ func (s *Server) poll() {
 	ping := make(chan int)
 	for i := len(s.followers) - 1; i >= 0; i-- {
 		f := s.followers[i]
-		hostport := f.Address + ":8080"
+		hostport := f.Address + followerPort
 		go func() {
 			req := request.NewRequest("GET", "http", hostport, "/heartbeat", nil, nil)
 			_, _, err := req.Do()
