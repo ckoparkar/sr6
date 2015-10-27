@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cskksc/minion/request"
+	"github.com/cskksc/sr6/request"
 )
 
 type SSHKeys struct {
@@ -125,6 +125,7 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	// We have a new follower. Send ssh and host information
 	lastID++
 	hostname := strings.Replace(*hostnamePattern, "ID", strconv.Itoa(lastID), -1)
+	fmt.Println(hostname)
 
 	// Add the follower to list
 	s.mu.Lock()

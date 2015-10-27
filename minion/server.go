@@ -13,7 +13,7 @@ import (
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
-	"github.com/cskksc/minion/request"
+	"github.com/cskksc/sr6/request"
 )
 
 const (
