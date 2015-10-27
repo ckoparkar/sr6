@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cskksc/sr6/request"
+	"github.com/cskksc/sr6/types"
 )
 
 type SSHKeys struct {
@@ -37,7 +38,7 @@ func NewSSHKeys() (*SSHKeys, error) {
 type Server struct {
 	sshKeys   SSHKeys
 	mu        sync.RWMutex
-	followers []Heartbeat
+	followers []types.Heartbeat
 }
 
 func NewServer() (*Server, error) {
@@ -47,7 +48,7 @@ func NewServer() (*Server, error) {
 	}
 	s := &Server{
 		sshKeys:   *keys,
-		followers: make([]Heartbeat, 0),
+		followers: make([]types.Heartbeat, 0),
 	}
 	go s.run()
 	return s, nil
@@ -104,7 +105,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
-	var beat Heartbeat
+	var beat types.Heartbeat
 	json.Unmarshal(body, &beat)
 
 	re := regexp.MustCompile("[[:digit:]]+")
@@ -132,10 +133,4 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 	s.followers = append(s.followers, beat)
 	log.Printf("Registered %#v\n", beat)
-}
-
-type Heartbeat struct {
-	ID      string `json:"id"`
-	Address string `json:"address"`
-	MemUsed string `json:"mem_used"`
 }

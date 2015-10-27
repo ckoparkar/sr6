@@ -11,7 +11,7 @@ import (
 var (
 	listenAddr   = flag.String("listen", ":8282", "HTTP listen adddress.")
 	pollInterval = flag.Duration("poll", 5*time.Minute, "Registers itself with master, every `t`.")
-	masterAddr   = flag.String("master", "localhost", "IP address of master.")
+	masterAddr   = flag.String("master-addr", "localhost:8281", "IP address of master.")
 )
 
 func main() {

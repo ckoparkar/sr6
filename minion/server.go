@@ -14,22 +14,12 @@ import (
 
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/cskksc/sr6/request"
-)
-
-const (
-	masterPort = ":8281"
+	"github.com/cskksc/sr6/types"
 )
 
 var (
 	ErrNotFound = fmt.Errorf("Not found.")
 )
-
-type Response struct {
-	Payload interface{} `json:"payload"`
-
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
 
 type Server struct {
 	ID string
@@ -84,7 +74,7 @@ func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 		s.serveError(w, r, err, http.StatusNotFound)
 		return
 	}
-	resp := Response{
+	resp := types.BaseResponse{
 		Payload: beat,
 		Status:  http.StatusOK,
 		Message: "success",
@@ -94,7 +84,7 @@ func (s *Server) serveHeartbeat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, status int) {
-	resp := Response{
+	resp := types.BaseResponse{
 		Status:  status,
 		Message: err.Error(),
 	}
@@ -102,19 +92,13 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error, s
 	json.NewEncoder(w).Encode(resp)
 }
 
-type Heartbeat struct {
-	ID      string `json:"id"`
-	Address string `json:"address"`
-	MemUsed string `json:"mem_used"`
-}
-
-func NewHeartbeat(id string) (*Heartbeat, error) {
+func NewHeartbeat(id string) (*types.Heartbeat, error) {
 	ip, err := internalIP()
 	if err != nil {
 		return nil, err
 	}
 	memUsed := memUsage()
-	return &Heartbeat{
+	return &types.Heartbeat{
 		ID:      id,
 		Address: ip,
 		MemUsed: memUsed,
@@ -130,13 +114,12 @@ func register(id string) error {
 	if err != nil {
 		return err
 	}
-	hostport := *masterAddr + masterPort
-	req := request.NewRequest("POST", "http", hostport, "/register", bytes.NewReader(buf), nil)
+	req := request.NewRequest("POST", "http", *masterAddr, "/register", bytes.NewReader(buf), nil)
 	_, _, err = req.Do()
 	if err != nil {
 		return err
 	}
-	log.Printf("Registered successfully with %s.\n", hostport)
+	log.Printf("Registered successfully with %s.\n", *masterAddr)
 	return nil
 }
 
