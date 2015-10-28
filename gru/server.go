@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -99,8 +98,10 @@ func (s *Server) serveRegisterFollower(w http.ResponseWriter, r *http.Request) {
 		PollInterval: pollInterval.String(),
 		Status:       http.StatusOK,
 	}
-	json.NewEncoder(os.Stdout).Encode(resp)
 	json.NewEncoder(w).Encode(resp)
+
+	// the follower will change its hostname, so update it here.
+	f.ID = hostname
 
 	// Add the follower to list
 	s.mu.Lock()

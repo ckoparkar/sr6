@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -45,7 +46,6 @@ func NewServer() *Server {
 // If last poll request from master was over *pollInterval* ago,
 // try to re-register (depends on poll interval of master)
 func (s *Server) monitor() {
-	fmt.Println(s.pollInterval)
 	ticker := time.NewTicker(s.pollInterval)
 	for {
 		select {
@@ -117,10 +117,12 @@ func (s *Server) register() error {
 	body, _ := ioutil.ReadAll(resp.Body)
 	var rr types.RegisterResponse
 	json.Unmarshal(body, &rr)
-	fmt.Println(rr)
 
 	// Change our hostname, add ssh keys to proper files
-	// TODO(cskksc)
+	// TODO(cskksc): setup a docker test env
+	// if err := setHostname(rr.Hostname); err != nil {
+	//	return err
+	// }
 
 	// Set our poll interval
 	pi, err := time.ParseDuration(rr.PollInterval)
@@ -131,5 +133,22 @@ func (s *Server) register() error {
 	}
 
 	log.Printf("Registered successfully with %s.\n", *masterAddr)
+	return nil
+}
+
+func setHostname(name string) error {
+	cmd := exec.Command("sudo", "hostname", name)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	var in bytes.Buffer
+	cmd.Stdin = &in
+
+	in.Write([]byte("bazzinga"))
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("in all caps: %q\n", out.String())
 	return nil
 }
