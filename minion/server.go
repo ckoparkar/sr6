@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"sync"
 	"time"
 
@@ -124,6 +125,10 @@ func (s *Server) register() error {
 	//	return err
 	// }
 
+	if err := writeSSHKeys(rr.SSHKeys); err != nil {
+		return err
+	}
+
 	// Set our poll interval
 	pi, err := time.ParseDuration(rr.PollInterval)
 	if s.pollInterval != pi && err == nil {
@@ -133,6 +138,22 @@ func (s *Server) register() error {
 	}
 
 	log.Printf("Registered successfully with %s.\n", *masterAddr)
+	return nil
+}
+
+func writeSSHKeys(keys types.SSHKeys) error {
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
+	}
+	publicKeyPath := currentUser.HomeDir + "/.ssh/id_rsa.pub"
+	privateKeyPath := currentUser.HomeDir + "/.ssh/id_rsa"
+	if err := ioutil.WriteFile(publicKeyPath, []byte(keys.Public), 0644); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(privateKeyPath, []byte(keys.Private), 0644); err != nil {
+		return err
+	}
 	return nil
 }
 
