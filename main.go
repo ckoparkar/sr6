@@ -7,14 +7,20 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-// var (
-//	nodeName = flag.String("nodename", "hostname", "Advertise this nodename.")
-//	mode     = flag.String("mode", "server", "Decides whether to run as client/server.")
-//	listen   = flag.String("listen", ":8080", "HTTP listen address.")
-// )
-
 func main() {
 	args := os.Args[1:]
+
+	// Get the command line args. We shortcut "--version" and "-v" to
+	// just show the version.
+	for _, arg := range args {
+		if arg == "-v" || arg == "--version" {
+			newArgs := make([]string, 1)
+			newArgs[0] = "version"
+			args = newArgs
+			break
+		}
+	}
+
 	cli := &cli.CLI{
 		Args:     args,
 		Commands: Commands,
