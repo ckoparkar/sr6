@@ -4,7 +4,11 @@ import (
 	"github.com/hashicorp/serf/serf"
 )
 
-var serfPort = ":8201"
+var (
+	serfPort = 8201
+
+	nodeName = "abc"
+)
 
 type Config struct {
 	// Node name is the name we use to advertise. Defaults to hostname.
@@ -17,10 +21,10 @@ type Config struct {
 func DefaultConfig() *Config {
 	eventCh := make(chan serf.Event, 256)
 	c := &Config{
-		NodeName:   *nodeName,
+		NodeName:   nodeName,
 		SerfConfig: serf.DefaultConfig(),
 	}
-	c.SerfConfig.NodeName = *nodeName
+	c.SerfConfig.NodeName = nodeName
 	c.SerfConfig.EventCh = eventCh
 	c.SerfConfig.SnapshotPath = "/tmp/serf.snapshot"
 	c.SerfConfig.MemberlistConfig.BindPort = serfPort

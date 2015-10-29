@@ -1,36 +1,29 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
-	"time"
+	"os"
+
+	"github.com/mitchellh/cli"
 )
 
-var (
-	nodeName = flag.String("nodename", "hostname", "Advertise this nodename.")
-	mode     = flag.String("mode", "server", "Decides whether to run as client/server.")
-	listen   = flag.String("listen", ":8080", "HTTP listen address.")
-)
+// var (
+//	nodeName = flag.String("nodename", "hostname", "Advertise this nodename.")
+//	mode     = flag.String("mode", "server", "Decides whether to run as client/server.")
+//	listen   = flag.String("listen", ":8080", "HTTP listen address.")
+// )
 
 func main() {
-	flag.Parse()
-	c := DefaultConfig()
-	s, err := NewServer(c)
+	args := os.Args[1:]
+	cli := &cli.CLI{
+		Args:     args,
+		Commands: Commands,
+		HelpFunc: cli.BasicHelpFunc("sr6"),
+	}
+	exitCode, err := cli.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error executing CLI: %s\n", err.Error())
+		os.Exit(1)
 	}
-	for {
-		_, err := s.serfLAN.Join([]string{serfPort}, true)
-		if err != nil {
-			log.Println(err)
-		} else {
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
-	for {
-		fmt.Println(s.serfLAN.Members())
-		time.Sleep(5 * time.Second)
-	}
+	os.Exit(exitCode)
 }
