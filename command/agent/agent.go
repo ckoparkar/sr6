@@ -1,4 +1,4 @@
-package command
+package agent
 
 import (
 	"flag"
@@ -8,16 +8,16 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-type AgentCommand struct {
+type Command struct {
 	Ui   cli.Ui
 	args []string
 }
 
-func (c *AgentCommand) Help() string {
+func (c *Command) Help() string {
 	return ""
 }
 
-func (c *AgentCommand) Run(args []string) int {
+func (c *Command) Run(args []string) int {
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
@@ -27,21 +27,22 @@ func (c *AgentCommand) Run(args []string) int {
 	if err != nil {
 		log.Fatal(err)
 	}
+	s.rpcServer.Accept(s.rpcListener)
 	for {
 		conn, err := s.rpcListener.Accept()
 		if err != nil {
-			log.Printf("asdw")
+			log.Println(err)
 		}
 		rpc.ServeConn(conn)
 	}
 	return 0
 }
 
-func (c *AgentCommand) Synopsis() string {
+func (c *Command) Synopsis() string {
 	return "Start a sr6 agent"
 }
 
-func (c *AgentCommand) readConfig() (*Config, error) {
+func (c *Command) readConfig() (*Config, error) {
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 

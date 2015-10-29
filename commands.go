@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/cskksc/sr6/command"
+	"github.com/cskksc/sr6/command/agent"
 	"github.com/mitchellh/cli"
 )
 
@@ -25,7 +26,7 @@ func init() {
 			}, nil
 		},
 		"agent": func() (cli.Command, error) {
-			return &command.AgentCommand{
+			return &agent.Command{
 				Ui: ui,
 			}, nil
 		},

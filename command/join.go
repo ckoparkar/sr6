@@ -1,9 +1,10 @@
 package command
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
+	"github.com/cskksc/sr6/command/agent"
 	"github.com/mitchellh/cli"
 )
 
@@ -24,7 +25,12 @@ Options:
 }
 
 func (c *JoinCommand) Run(args []string) int {
-	fmt.Println(args)
+	client, err := agent.NewRPCClient("localhost:8300")
+	if err != nil {
+		log.Println(err)
+		return 1
+	}
+	client.Join()
 	return 0
 }
 

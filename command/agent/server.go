@@ -1,6 +1,8 @@
-package command
+package agent
 
 import (
+	"fmt"
+	"log"
 	"net"
 	"net/rpc"
 	"os"
@@ -71,21 +73,24 @@ func NewServer(config *Config) (*Server, error) {
 		serfLAN:   serfLAN,
 		rpcServer: rpc.NewServer(),
 	}
-	s.setupRPC()
+	if err := s.setupRPC(); err != nil {
+		log.Fatal(err)
+	}
 
 	return s, nil
 }
 
 func (s *Server) setupRPC() error {
 	s.endpoints.Internal = &Internal{s}
-	s.rpcServer.Register(s.endpoints.Internal)
+	if err := s.rpcServer.Register(s.endpoints.Internal); err != nil {
+		return err
+	}
 
 	list, err := net.ListenTCP("tcp", s.config.RPCAddr)
 	if err != nil {
 		return err
 	}
 	s.rpcListener = list
-
 	return nil
 }
 
@@ -97,7 +102,8 @@ type Internal struct {
 	srv *Server
 }
 
-func (i *Internal) Join(args *string, reply *string) error {
+func (i *Internal) Join(args string, reply *string) error {
+	fmt.Println("I am here", args)
 	*reply = "I will join this node."
 	return nil
 }
