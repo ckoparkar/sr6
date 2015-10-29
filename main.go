@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	"github.com/hashicorp/serf/serf"
 )
 
 var (
 	nodeName = flag.String("nodename", "hostname", "Advertise this nodename.")
-	join     = flag.String("join", "localhost:8202", "Attempts to join `node`.")
-	port     = flag.Int("port", 8201, "Port used for serf bind/advertise.")
+	mode     = flag.String("mode", "server", "Decides whether to run as client/server.")
+	listen   = flag.String("listen", ":8080", "HTTP listen address.")
 )
 
 func main() {
@@ -23,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 	for {
-		_, err := s.serfLAN.Join([]string{*join}, true)
+		_, err := s.serfLAN.Join([]string{serfPort}, true)
 		if err != nil {
 			log.Println(err)
 		} else {
@@ -35,41 +33,4 @@ func main() {
 		fmt.Println(s.serfLAN.Members())
 		time.Sleep(5 * time.Second)
 	}
-}
-
-type Config struct {
-	// Node name is the name we use to advertise. Defaults to hostname.
-	NodeName string
-
-	// SerfConfig is the configuration for serf
-	SerfConfig *serf.Config
-}
-
-func DefaultConfig() *Config {
-	eventCh := make(chan serf.Event, 256)
-	c := &Config{
-		NodeName:   *nodeName,
-		SerfConfig: serf.DefaultConfig(),
-	}
-	c.SerfConfig.NodeName = *nodeName
-	c.SerfConfig.EventCh = eventCh
-	c.SerfConfig.SnapshotPath = "/tmp/serf.snapshot"
-	c.SerfConfig.MemberlistConfig.BindPort = *port
-	c.SerfConfig.MemberlistConfig.AdvertisePort = *port
-
-	return c
-}
-
-type Server struct {
-	serfLAN *serf.Serf
-}
-
-func NewServer(config *Config) (*Server, error) {
-	serfLAN, err := serf.Create(config.SerfConfig)
-	if err != nil {
-		return nil, err
-	}
-	return &Server{
-		serfLAN: serfLAN,
-	}, nil
 }
