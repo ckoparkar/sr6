@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -52,16 +51,14 @@ func (s *Server) setupRPC() error {
 	return nil
 }
 
-type endpoints struct {
-	Internal *Internal
-}
-
-type Internal struct {
-	srv *Server
-}
-
-func (i *Internal) Join(args string, reply *string) error {
-	fmt.Println("I am here", args)
-	*reply = "I will join this node."
+func (s *Server) Shutdown() error {
+	log.Printf("[INFO] sr6: shutting down server")
+	if s.serfLAN != nil {
+		s.serfLAN.Leave()
+		s.serfLAN.Shutdown()
+	}
+	if s.rpcListener != nil {
+		s.rpcListener.Close()
+	}
 	return nil
 }

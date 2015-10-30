@@ -9,8 +9,10 @@ import (
 )
 
 type Command struct {
-	Ui   cli.Ui
-	args []string
+	Ui         cli.Ui
+	ShutdownCh <-chan struct{}
+	args       []string
+	server     *Server
 }
 
 func (c *Command) Help() string {
@@ -27,6 +29,8 @@ func (c *Command) Run(args []string) int {
 	if err != nil {
 		log.Fatal(err)
 	}
+	c.server = s
+	go c.handleSignals()
 	s.rpcServer.Accept(s.rpcListener)
 	for {
 		conn, err := s.rpcListener.Accept()
@@ -40,6 +44,15 @@ func (c *Command) Run(args []string) int {
 
 func (c *Command) Synopsis() string {
 	return "Start a sr6 agent"
+}
+
+func (c *Command) handleSignals() {
+	for {
+		select {
+		case <-c.ShutdownCh:
+			c.server.Shutdown()
+		}
+	}
 }
 
 func (c *Command) readConfig() (*Config, error) {

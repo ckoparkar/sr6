@@ -18,8 +18,7 @@ Usage: sr6 join [options] address ...
   Tells a running sr6 agent (with "sr6 agent") to join the cluster
   by specifying at least one existing member.
 Options:
-  -rpc-addr=127.0.0.1:8400  RPC address of the Consul agent.
-  -wan                      Joins a server to another server in the WAN pool
+  -rpc-addr=127.0.0.1:8400  RPC address of the sr6 agent.
 `
 	return strings.TrimSpace(helpText)
 }
