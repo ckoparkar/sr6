@@ -5,51 +5,9 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-	"os"
 
 	"github.com/hashicorp/serf/serf"
 )
-
-const (
-	DefaultSerfPort = 8201
-)
-
-var (
-	DefaultRPCAddr = &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 8300}
-)
-
-type Config struct {
-	// Node name is the name we use to advertise. Defaults to hostname.
-	NodeName string
-
-	// SerfConfig is the configuration for serf
-	SerfConfig *serf.Config
-
-	// RPCAddr describes the
-	RPCAddr *net.TCPAddr
-}
-
-func DefaultConfig() (*Config, error) {
-	eventCh := make(chan serf.Event, 256)
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-	c := &Config{
-		NodeName:   hostname,
-		SerfConfig: serf.DefaultConfig(),
-		RPCAddr:    DefaultRPCAddr,
-	}
-
-	// Serf config
-	c.SerfConfig.NodeName = hostname
-	c.SerfConfig.EventCh = eventCh
-	c.SerfConfig.SnapshotPath = "/tmp/serf.snapshot"
-	c.SerfConfig.MemberlistConfig.BindPort = DefaultSerfPort
-	c.SerfConfig.MemberlistConfig.AdvertisePort = DefaultSerfPort
-
-	return c, nil
-}
 
 type Server struct {
 	config  *Config

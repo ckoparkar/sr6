@@ -43,18 +43,19 @@ func (c *Command) Synopsis() string {
 }
 
 func (c *Command) readConfig() (*Config, error) {
+	var cmdConfig Config
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
+
+	cmdFlags.StringVar(&cmdConfig.NodeName, "node", "", "node name")
+	if err := cmdFlags.Parse(c.args); err != nil {
+		return nil, err
+	}
 
 	config, err := DefaultConfig()
 	if err != nil {
 		return nil, err
 	}
-	cmdFlags.StringVar(&config.NodeName, "node", "", "node name")
-	if err := cmdFlags.Parse(c.args); err != nil {
-		return nil, err
-	}
-
-	config.SerfConfig.NodeName = config.NodeName
+	config = MergeConfig(config, &cmdConfig)
 	return config, nil
 }
