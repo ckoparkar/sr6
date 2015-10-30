@@ -6,6 +6,8 @@ type endpoints struct {
 	Internal *Internal
 }
 
+// Internal serves as a endpoint for all internal operations
+// These API's may not be directly exposed to clients
 type Internal struct {
 	srv *Server
 }

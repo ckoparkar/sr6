@@ -3,7 +3,6 @@ package agent
 import (
 	"flag"
 	"log"
-	"net/rpc"
 
 	"github.com/mitchellh/cli"
 )
@@ -30,31 +29,28 @@ func (c *Command) Run(args []string) int {
 		log.Fatal(err)
 	}
 	c.server = s
-	go c.handleSignals()
-	s.rpcServer.Accept(s.rpcListener)
-	for {
-		conn, err := s.rpcListener.Accept()
-		if err != nil {
-			log.Println(err)
-		}
-		rpc.ServeConn(conn)
-	}
-	return 0
+	return c.handleSignals()
 }
 
 func (c *Command) Synopsis() string {
 	return "Start a sr6 agent"
 }
 
-func (c *Command) handleSignals() {
-	for {
-		select {
-		case <-c.ShutdownCh:
-			c.server.Shutdown()
+// Runs in its own go routine
+// handleSignals monitors the shutdownCh channel and acts on it
+func (c *Command) handleSignals() int {
+	select {
+	case <-c.ShutdownCh:
+		if err := c.server.Shutdown(); err != nil {
+			log.Println("[INFO] sr6: Couldn't properly shutdown the server")
+			return 1
 		}
+		return 0
 	}
 }
 
+// readConfig reads config provided as cmd-line args,
+// and merges it with the defaults
 func (c *Command) readConfig() (*Config, error) {
 	var cmdConfig Config
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
@@ -69,6 +65,7 @@ func (c *Command) readConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Not all config would be provided as cmd-line args
 	config = MergeConfig(config, &cmdConfig)
 	return config, nil
 }
