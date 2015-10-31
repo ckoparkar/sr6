@@ -14,22 +14,30 @@ type JoinCommand struct {
 
 func (c *JoinCommand) Help() string {
 	helpText := `
-Usage: sr6 join [options] address ...
+Usage: sr6 join address ...
   Tells a running sr6 agent (with "sr6 agent") to join the cluster
   by specifying at least one existing member.
-Options:
-  -rpc-addr=127.0.0.1:8400  RPC address of the sr6 agent.
 `
 	return strings.TrimSpace(helpText)
 }
 
 func (c *JoinCommand) Run(args []string) int {
+	addrs := args
+	if len(addrs) == 0 {
+		c.Ui.Error("At least one address to join must be specified.")
+		c.Ui.Error("")
+		c.Ui.Error(c.Help())
+		return 1
+	}
+
 	client, err := agent.NewRPCClient("localhost:8300")
 	if err != nil {
 		log.Println(err)
 		return 1
 	}
-	client.Join()
+	defer client.Close()
+
+	client.Join(addrs)
 	return 0
 }
 

@@ -11,8 +11,12 @@ import (
 
 // Server is the main sr6 server
 type Server struct {
-	config  *Config
+	config *Config
+
 	serfLAN *serf.Serf
+	// eventChLAN is used to receive events from the
+	// serf cluster in the datacenter
+	eventChLAN chan serf.Event
 
 	// rpcListener is used to listen for incoming connections
 	rpcListener net.Listener
@@ -28,16 +32,20 @@ type Server struct {
 }
 
 func NewServer(config *Config) (*Server, error) {
-	serfLAN, err := serf.Create(config.SerfConfig)
-	if err != nil {
-		return nil, err
-	}
 	s := &Server{
 		config:     config,
-		serfLAN:    serfLAN,
+		eventChLAN: make(chan serf.Event, 256),
 		rpcServer:  rpc.NewServer(),
 		shutdownCh: make(chan struct{}),
 	}
+
+	// Setup serf
+	serfLAN, err := s.setupSerf()
+	if err != nil {
+		return nil, err
+	}
+	s.serfLAN = serfLAN
+
 	// Setup RPC and start listening for requests
 	if err := s.setupRPC(); err != nil {
 		log.Fatal(err)
@@ -45,6 +53,16 @@ func NewServer(config *Config) (*Server, error) {
 	go s.listenRPC()
 
 	return s, nil
+}
+
+// setupSerf sets up serf and provides a handle on its events
+func (s *Server) setupSerf() (*serf.Serf, error) {
+	s.config.SerfConfig.EventCh = s.eventChLAN
+	serfLAN, err := serf.Create(s.config.SerfConfig)
+	if err != nil {
+		return nil, err
+	}
+	return serfLAN, nil
 }
 
 // setupRPC starts a RPC server and registers all endpoints

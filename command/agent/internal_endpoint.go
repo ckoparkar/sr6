@@ -1,7 +1,5 @@
 package agent
 
-import "fmt"
-
 type endpoints struct {
 	Internal *Internal
 }
@@ -12,8 +10,11 @@ type Internal struct {
 	srv *Server
 }
 
-func (i *Internal) Join(args string, reply *string) error {
-	fmt.Println("I am here", args)
-	*reply = "I will join this node."
+func (i *Internal) Join(addrs []string, reply *int) error {
+	n, err := i.srv.serfLAN.Join(addrs, true)
+	if err != nil {
+		return err
+	}
+	*reply = n
 	return nil
 }
