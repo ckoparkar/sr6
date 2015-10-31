@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
+
+	"github.com/hashicorp/serf/serf"
 )
 
 type RPCClient struct {
@@ -23,6 +25,14 @@ func NewRPCClient(addr string) (*RPCClient, error) {
 func (c *RPCClient) Join(addrs []string) {
 	var reply int
 	if err := c.conn.Call("Internal.Join", addrs, &reply); err != nil {
+		log.Println(err)
+	}
+	fmt.Println(reply)
+}
+
+func (c *RPCClient) Members() {
+	var reply []serf.Member
+	if err := c.conn.Call("Internal.Members", "", &reply); err != nil {
 		log.Println(err)
 	}
 	fmt.Println(reply)

@@ -1,5 +1,7 @@
 package agent
 
+import "github.com/hashicorp/serf/serf"
+
 type endpoints struct {
 	Internal *Internal
 }
@@ -16,5 +18,10 @@ func (i *Internal) Join(addrs []string, reply *int) error {
 		return err
 	}
 	*reply = n
+	return nil
+}
+
+func (i *Internal) Members(_ string, reply *[]serf.Member) error {
+	*reply = i.srv.serfLAN.Members()
 	return nil
 }

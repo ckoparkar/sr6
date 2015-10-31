@@ -33,6 +33,11 @@ func init() {
 				ShutdownCh: makeShutdownCh(),
 			}, nil
 		},
+		"members": func() (cli.Command, error) {
+			return &command.MembersCommand{
+				Ui: ui,
+			}, nil
+		},
 	}
 }
 
