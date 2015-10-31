@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/cskksc/sr6/command"
-	"github.com/cskksc/sr6/command/agent"
 	"github.com/mitchellh/cli"
 )
 
@@ -28,7 +27,7 @@ func init() {
 			}, nil
 		},
 		"agent": func() (cli.Command, error) {
-			return &agent.Command{
+			return &command.AgentCommand{
 				Ui:         ui,
 				ShutdownCh: makeShutdownCh(),
 			}, nil

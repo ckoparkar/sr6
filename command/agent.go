@@ -1,30 +1,31 @@
-package agent
+package command
 
 import (
 	"flag"
 	"log"
 
+	"github.com/cskksc/sr6/sr6"
 	"github.com/mitchellh/cli"
 )
 
-type Command struct {
+type AgentCommand struct {
 	Ui         cli.Ui
 	ShutdownCh <-chan struct{}
 	args       []string
-	server     *Server
+	server     *sr6.Server
 }
 
-func (c *Command) Help() string {
+func (c *AgentCommand) Help() string {
 	return ""
 }
 
-func (c *Command) Run(args []string) int {
+func (c *AgentCommand) Run(args []string) int {
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	s, err := NewServer(config)
+	s, err := sr6.NewServer(config)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,13 +33,13 @@ func (c *Command) Run(args []string) int {
 	return c.handleSignals()
 }
 
-func (c *Command) Synopsis() string {
+func (c *AgentCommand) Synopsis() string {
 	return "Start a sr6 agent"
 }
 
 // Runs in its own go routine
 // handleSignals monitors the shutdownCh channel and acts on it
-func (c *Command) handleSignals() int {
+func (c *AgentCommand) handleSignals() int {
 	select {
 	case <-c.ShutdownCh:
 		if err := c.server.Shutdown(); err != nil {
@@ -51,8 +52,8 @@ func (c *Command) handleSignals() int {
 
 // readConfig reads config provided as cmd-line args,
 // and merges it with the defaults
-func (c *Command) readConfig() (*Config, error) {
-	var cmdConfig Config
+func (c *AgentCommand) readConfig() (*sr6.Config, error) {
+	var cmdConfig sr6.Config
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 
@@ -61,11 +62,11 @@ func (c *Command) readConfig() (*Config, error) {
 		return nil, err
 	}
 
-	config, err := DefaultConfig()
+	config, err := sr6.DefaultConfig()
 	if err != nil {
 		return nil, err
 	}
 	// Not all config would be provided as cmd-line args
-	config = MergeConfig(config, &cmdConfig)
+	config = sr6.MergeConfig(config, &cmdConfig)
 	return config, nil
 }

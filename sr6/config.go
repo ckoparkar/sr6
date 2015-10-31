@@ -1,4 +1,4 @@
-package agent
+package sr6
 
 import (
 	"net"

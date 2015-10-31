@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/cskksc/sr6/command/agent"
+	"github.com/cskksc/sr6/sr6"
 	"github.com/mitchellh/cli"
 )
 
@@ -30,7 +30,7 @@ func (c *JoinCommand) Run(args []string) int {
 		return 1
 	}
 
-	client, err := agent.NewRPCClient("localhost:8300")
+	client, err := sr6.NewRPCClient("localhost:8300")
 	if err != nil {
 		log.Println(err)
 		return 1
