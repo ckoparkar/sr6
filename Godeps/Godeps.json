@@ -1,0 +1,32 @@
+{
+	"ImportPath": "github.com/cskksc/sr6",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/armon/go-metrics",
+			"Rev": "a54701ebec11868993bc198c3f315353e9de2ed6"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-msgpack/codec",
+			"Rev": "fa3f63826f7c23912c15263591e65d54d080b458"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/memberlist",
+			"Rev": "6025015f2dc659ca2c735112d37e753bda6e329d"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/serf/serf",
+			"Comment": "v0.6.4-17-g668982d",
+			"Rev": "668982d8f90f5eff4a766583c1286393c1d27f68"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/cli",
+			"Rev": "afc399c273e70173826fb6f518a48edff23fe897"
+		},
+		{
+			"ImportPath": "github.com/ryanuber/columnize",
+			"Comment": "v2.0.1-6-g44cb478",
+			"Rev": "44cb4788b2ec3c3d158dd3d1b50aba7d66f4b59a"
+		}
+	]
+}
