@@ -1,6 +1,7 @@
 package command
 
 import (
+	"flag"
 	"log"
 	"strings"
 
@@ -15,6 +16,7 @@ type JoinCommand struct {
 func (c *JoinCommand) Help() string {
 	helpText := `
 Usage: sr6 join address ...
+
   Tells a running sr6 agent (with "sr6 agent") to join the cluster
   by specifying at least one existing member.
 `
@@ -22,7 +24,12 @@ Usage: sr6 join address ...
 }
 
 func (c *JoinCommand) Run(args []string) int {
-	addrs := args
+	cmdFlags := flag.NewFlagSet("join", flag.ContinueOnError)
+	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := cmdFlags.Parse(args); err != nil {
+		return 1
+	}
+	addrs := cmdFlags.Args()
 	if len(addrs) == 0 {
 		c.Ui.Error("At least one address to join must be specified.")
 		c.Ui.Error("")

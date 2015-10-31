@@ -21,5 +21,5 @@ func (c *VersionCommand) Run(_ []string) int {
 }
 
 func (c *VersionCommand) Synopsis() string {
-	return "Prints sr6 version"
+	return "Prints the sr6 version"
 }

@@ -1,7 +1,9 @@
 package command
 
 import (
+	"flag"
 	"log"
+	"strings"
 
 	"github.com/cskksc/sr6/sr6"
 	"github.com/mitchellh/cli"
@@ -12,10 +14,18 @@ type MembersCommand struct {
 }
 
 func (c *MembersCommand) Help() string {
-	return ""
+	helpText := `Usage: sr6 members
+
+  Outputs the members connected to the running sr6 agent.`
+	return strings.TrimSpace(helpText)
 }
 
 func (c *MembersCommand) Run(args []string) int {
+	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
+	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := cmdFlags.Parse(args); err != nil {
+		return 1
+	}
 	client, err := sr6.NewRPCClient("localhost:8300")
 	if err != nil {
 		log.Println(err)

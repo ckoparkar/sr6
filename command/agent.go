@@ -3,6 +3,7 @@ package command
 import (
 	"flag"
 	"log"
+	"strings"
 
 	"github.com/cskksc/sr6/sr6"
 	"github.com/mitchellh/cli"
@@ -16,10 +17,19 @@ type AgentCommand struct {
 }
 
 func (c *AgentCommand) Help() string {
-	return ""
+	helpText := `Usage: sr6 agent [options]
+
+  Starts the sr6 agent and runs until an interrupt is received. The
+  agent represents a single node in a cluster.`
+	return strings.TrimSpace(helpText)
 }
 
 func (c *AgentCommand) Run(args []string) int {
+	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
+	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := cmdFlags.Parse(args); err != nil {
+		return 1
+	}
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
@@ -34,7 +44,7 @@ func (c *AgentCommand) Run(args []string) int {
 }
 
 func (c *AgentCommand) Synopsis() string {
-	return "Start a sr6 agent"
+	return "Runs a sr6 agent"
 }
 
 // Runs in its own go routine
