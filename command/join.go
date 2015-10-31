@@ -2,7 +2,7 @@ package command
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/cskksc/sr6/sr6"
@@ -39,12 +39,17 @@ func (c *JoinCommand) Run(args []string) int {
 
 	client, err := sr6.NewRPCClient("localhost:8300")
 	if err != nil {
-		log.Println(err)
+		c.Ui.Error(fmt.Sprintf("Error connecting to sr6 agent: %s", err))
 		return 1
 	}
 	defer client.Close()
 
-	client.Join(addrs)
+	n, err := client.Join(addrs)
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error joining the cluster: %s", err))
+		return 1
+	}
+	c.Ui.Output(fmt.Sprintf("Successfully joined cluster by contacting %d nodes.", n))
 	return 0
 }
 

@@ -1,8 +1,6 @@
 package sr6
 
 import (
-	"fmt"
-	"log"
 	"net/rpc"
 
 	"github.com/hashicorp/serf/serf"
@@ -22,20 +20,20 @@ func NewRPCClient(addr string) (*RPCClient, error) {
 	}, nil
 }
 
-func (c *RPCClient) Join(addrs []string) {
+func (c *RPCClient) Join(addrs []string) (int, error) {
 	var reply int
 	if err := c.conn.Call("Internal.Join", addrs, &reply); err != nil {
-		log.Println(err)
+		return -1, err
 	}
-	fmt.Println(reply)
+	return reply, nil
 }
 
-func (c *RPCClient) Members() {
+func (c *RPCClient) Members() ([]serf.Member, error) {
 	var reply []serf.Member
 	if err := c.conn.Call("Internal.Members", "", &reply); err != nil {
-		log.Println(err)
+		return nil, err
 	}
-	fmt.Println(reply)
+	return reply, nil
 }
 
 func (c *RPCClient) Close() error {
