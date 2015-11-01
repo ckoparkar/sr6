@@ -11,9 +11,12 @@ import (
 
 // Server is the main sr6 server
 type Server struct {
+	// config is this servers config
 	config *Config
 
+	// serfLAN is the local serf cluster
 	serfLAN *serf.Serf
+
 	// eventChLAN is used to receive events from the
 	// serf cluster in the datacenter
 	eventChLAN chan serf.Event
@@ -57,7 +60,14 @@ func NewServer(config *Config) (*Server, error) {
 
 // setupSerf sets up serf and provides a handle on its events
 func (s *Server) setupSerf() (*serf.Serf, error) {
+	// initializes the config (contains maps)
+	s.config.SerfConfig.Init()
 	s.config.SerfConfig.EventCh = s.eventChLAN
+	if s.config.Leader {
+		s.config.SerfConfig.Tags["role"] = "leader"
+	} else {
+		s.config.SerfConfig.Tags["role"] = "follower"
+	}
 	serfLAN, err := serf.Create(s.config.SerfConfig)
 	if err != nil {
 		return nil, err
@@ -91,6 +101,7 @@ func (s *Server) listenRPC() {
 			}
 			log.Printf("[ERR] sr6.rpc: failed to accept RPC conn: %v", err)
 		}
+		log.Printf("[INFO] rpc: Accepted client: %v", conn.RemoteAddr())
 		rpc.ServeConn(conn)
 	}
 }

@@ -19,6 +19,9 @@ type Config struct {
 	// Node name is the name we use to advertise. Defaults to hostname.
 	NodeName string
 
+	// Leader decides if we are the leader
+	Leader bool
+
 	// SerfConfig is the configuration for serf
 	SerfConfig *serf.Config
 
@@ -33,6 +36,7 @@ func DefaultConfig() (*Config, error) {
 	}
 	c := &Config{
 		NodeName:   hostname,
+		Leader:     false,
 		SerfConfig: serf.DefaultConfig(),
 		RPCAddr:    DefaultRPCAddr,
 	}
@@ -55,6 +59,9 @@ func MergeConfig(a, b *Config) *Config {
 	if b.NodeName != "" {
 		result.NodeName = b.NodeName
 		result.SerfConfig.NodeName = b.NodeName
+	}
+	if b.Leader {
+		result.Leader = b.Leader
 	}
 	return &result
 }

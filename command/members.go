@@ -52,11 +52,13 @@ func (c *MembersCommand) Synopsis() string {
 
 func output(members []serf.Member) []string {
 	result := make([]string, 0, len(members))
-	header := "Node|Address|Status"
+	header := "Node|Address|Status|Type"
 	result = append(result, header)
 	for _, member := range members {
 		addr := net.TCPAddr{IP: member.Addr, Port: int(member.Port)}
-		result = append(result, fmt.Sprintf("%s|%s|%s", member.Name, addr.String(), member.Status))
+		line := fmt.Sprintf("%s|%s|%s|%s",
+			member.Name, addr.String(), member.Status, member.Tags["role"])
+		result = append(result, line)
 	}
 	return result
 }

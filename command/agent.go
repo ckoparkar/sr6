@@ -25,11 +25,6 @@ func (c *AgentCommand) Help() string {
 }
 
 func (c *AgentCommand) Run(args []string) int {
-	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
-	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
-	if err := cmdFlags.Parse(args); err != nil {
-		return 1
-	}
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
@@ -68,6 +63,7 @@ func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 
 	cmdFlags.StringVar(&cmdConfig.NodeName, "node", "", "node name")
+	cmdFlags.BoolVar(&cmdConfig.Leader, "leader", false, "enable server leader node")
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil, err
 	}
