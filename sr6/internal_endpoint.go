@@ -25,3 +25,10 @@ func (i *Internal) Members(_ string, reply *[]serf.Member) error {
 	*reply = i.srv.serfLAN.Members()
 	return nil
 }
+
+func (i *Internal) Leave(_ string, _ *string) error {
+	if err := i.srv.serfLAN.Leave(); err != nil {
+		return err
+	}
+	return nil
+}

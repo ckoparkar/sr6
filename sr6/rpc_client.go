@@ -36,6 +36,14 @@ func (c *RPCClient) Members() ([]serf.Member, error) {
 	return reply, nil
 }
 
+func (c *RPCClient) Leave() error {
+	var reply string
+	if err := c.conn.Call("Internal.Leave", "", &reply); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *RPCClient) Close() error {
 	if err := c.conn.Close(); err != nil {
 		return err

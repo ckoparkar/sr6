@@ -51,8 +51,8 @@ func NewHostsManager(path string) (*HostsManager, error) {
 	return h, nil
 }
 
-// update the ip-hostname pair and write changes in file
-func (h *HostsManager) update(ip, hostname string) error {
+// add the ip-hostname pair and write changes in file
+func (h *HostsManager) add(ip, hostname string) error {
 	h.Lock()
 	defer h.Unlock()
 	h.hosts[ip] = hostname

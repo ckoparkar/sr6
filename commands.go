@@ -37,6 +37,11 @@ func init() {
 				Ui: ui,
 			}, nil
 		},
+		"leave": func() (cli.Command, error) {
+			return &command.LeaveCommand{
+				Ui: ui,
+			}, nil
+		},
 	}
 }
 
