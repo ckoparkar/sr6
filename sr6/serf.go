@@ -1,7 +1,6 @@
 package sr6
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/serf/serf"
@@ -36,7 +35,8 @@ func (s *Server) nodeJoin(me serf.MemberEvent) {
 
 func (s *Server) nodeLeave(me serf.MemberEvent) {
 	for _, m := range me.Members {
-		// TODO(cskksc): remove entry from host
-		fmt.Printf("%s is leaving the cluster.", m.Addr.String())
+		if err := s.hosts.remove(m.Addr.String(), m.Name); err != nil {
+			log.Printf("[ERR] Couldn't remove host , %#v", err)
+		}
 	}
 }

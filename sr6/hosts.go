@@ -60,11 +60,22 @@ func (h *HostsManager) add(ip, hostname string) error {
 	for k, v := range h.hosts {
 		content += fmt.Sprintf("%s %s\n", k, v)
 	}
-	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0660)
-	if err != nil {
+	if err := overwriteFile(h.path, content); err != nil {
 		return err
 	}
-	defer f.Close()
-	f.WriteString(content)
+	return nil
+}
+
+func (h *HostsManager) remove(ip, hostname string) error {
+	h.Lock()
+	defer h.Unlock()
+	delete(h.hosts, ip)
+	var content string
+	for k, v := range h.hosts {
+		content += fmt.Sprintf("%s %s\n", k, v)
+	}
+	if err := overwriteFile(h.path, content); err != nil {
+		return err
+	}
 	return nil
 }

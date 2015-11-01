@@ -44,5 +44,5 @@ func (c *LeaveCommand) Run(args []string) int {
 }
 
 func (c *LeaveCommand) Synopsis() string {
-	return "Tell sr6 agent to leave the cluster"
+	return "Gracefully leaves the sr6 cluster"
 }
