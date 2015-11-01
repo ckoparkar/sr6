@@ -64,6 +64,7 @@ func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 
 	cmdFlags.StringVar(&cmdConfig.NodeName, "node", "", "node name")
 	cmdFlags.BoolVar(&cmdConfig.Leader, "leader", false, "enable server leader node")
+	cmdFlags.StringVar(&cmdConfig.HostsFile, "hosts-file", "/etc/hosts", "hosts file path")
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil, err
 	}

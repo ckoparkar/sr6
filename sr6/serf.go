@@ -25,6 +25,8 @@ func (s *Server) serfEventHandler() {
 
 func (s *Server) nodeJoin(me serf.MemberEvent) {
 	for _, m := range me.Members {
-		s.updateHosts(m.Addr.String(), m.Name)
+		if err := s.hosts.update(m.Addr.String(), m.Name); err != nil {
+			log.Printf("[ERR] Couldn't update hosts file, %#v", err)
+		}
 	}
 }

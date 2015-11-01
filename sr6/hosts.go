@@ -3,13 +3,34 @@ package sr6
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"strings"
+	"sync"
 )
 
+type HostsManager struct {
+	// it is the map of ip -> hostname
+	hosts map[string]string
+
+	// path of hosts file. defaults to /etc/hosts
+	path string
+
+	sync.Mutex
+}
+
 // NewHosts parses hosts file at *path*
-func NewHosts(path string) (map[string]string, error) {
-	// re := regexp.MustCompile("(.*) +(.*)")
-	hosts := make(map[string]string)
+func NewHostsManager(path string) (*HostsManager, error) {
+	h := &HostsManager{
+		hosts: make(map[string]string),
+		path:  path,
+	}
+	// if hosts file doesnt exist, return
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("[WARN] writing a new hosts file at: %s", path)
+		return h, nil
+	}
+	// parse hosts file
 	input, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -25,19 +46,25 @@ func NewHosts(path string) (map[string]string, error) {
 		if len(x) == 3 {
 			hostname = x[2]
 		}
-		hosts[ip] = hostname
+		h.hosts[ip] = hostname
 	}
-	return hosts, nil
+	return h, nil
 }
 
-func (s *Server) updateHosts(ip, hostname string) error {
-	s.hostsLock.Lock()
-	defer s.hostsLock.Unlock()
-
-	s.hosts[ip] = hostname
-	for k, v := range s.hosts {
-		fmt.Println(k, "---", v)
+// update the ip-hostname pair and write changes in file
+func (h *HostsManager) update(ip, hostname string) error {
+	h.Lock()
+	defer h.Unlock()
+	h.hosts[ip] = hostname
+	var content string
+	for k, v := range h.hosts {
+		content += fmt.Sprintf("%s %s\n", k, v)
 	}
-	// TODO(cskksc): update hosts file here
+	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	f.WriteString(content)
 	return nil
 }

@@ -1,7 +1,6 @@
 package sr6
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -34,10 +33,8 @@ type Server struct {
 	shutdownCh   chan struct{}
 	shutdownLock sync.Mutex
 
-	// hosts are parsed entries in /etc/hosts
-	// map of ip -> hostname
-	hosts     map[string]string
-	hostsLock sync.Mutex
+	// hosts manages LAN hosts
+	hosts *HostsManager
 }
 
 func NewServer(config *Config) (*Server, error) {
@@ -49,12 +46,11 @@ func NewServer(config *Config) (*Server, error) {
 	}
 
 	// get hosts
-	hosts, err := NewHosts("/tmp/hosts")
+	hosts, err := NewHostsManager(config.HostsFile)
 	if err != nil {
 		return nil, err
 	}
 	s.hosts = hosts
-	fmt.Println(s.hosts)
 
 	// Setup serf
 	serfLAN, err := s.setupSerf()

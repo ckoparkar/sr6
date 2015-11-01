@@ -27,6 +27,9 @@ type Config struct {
 
 	// RPCAddr describes the
 	RPCAddr *net.TCPAddr
+
+	// HostsFile points to hosts file. Defaults to /etc/hosts
+	HostsFile string
 }
 
 func DefaultConfig() (*Config, error) {
@@ -39,6 +42,7 @@ func DefaultConfig() (*Config, error) {
 		Leader:     false,
 		SerfConfig: serf.DefaultConfig(),
 		RPCAddr:    DefaultRPCAddr,
+		HostsFile:  "/etc/hosts",
 	}
 	c.setupSerfConfig()
 	return c, nil
@@ -62,6 +66,9 @@ func MergeConfig(a, b *Config) *Config {
 	}
 	if b.Leader {
 		result.Leader = b.Leader
+	}
+	if b.HostsFile != "" {
+		result.HostsFile = b.HostsFile
 	}
 	return &result
 }
