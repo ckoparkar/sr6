@@ -17,19 +17,25 @@ type MembersCommand struct {
 }
 
 func (c *MembersCommand) Help() string {
-	helpText := `Usage: sr6 members
+	helpText := `Usage: sr6 members [options]
 
-  Outputs the members connected to the running sr6 agent.`
+  Outputs the members connected to the running sr6 agent.
+
+Options:
+
+  -rpc-addr=127.0.0.1:8300 RPC address of the sr6 agent.
+`
 	return strings.TrimSpace(helpText)
 }
 
 func (c *MembersCommand) Run(args []string) int {
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
+	rpcAddr := RPCAddrFlag(cmdFlags)
 	if err := cmdFlags.Parse(args); err != nil {
 		return 1
 	}
-	client, err := sr6.NewRPCClient("localhost:8300")
+	client, err := sr6.NewRPCClient(*rpcAddr)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Error connecting to sr6 agent: %s", err))
 		return 1
