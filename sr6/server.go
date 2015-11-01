@@ -1,6 +1,7 @@
 package sr6
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -32,6 +33,11 @@ type Server struct {
 	shutdown     bool
 	shutdownCh   chan struct{}
 	shutdownLock sync.Mutex
+
+	// hosts are parsed entries in /etc/hosts
+	// map of ip -> hostname
+	hosts     map[string]string
+	hostsLock sync.Mutex
 }
 
 func NewServer(config *Config) (*Server, error) {
@@ -42,16 +48,27 @@ func NewServer(config *Config) (*Server, error) {
 		shutdownCh: make(chan struct{}),
 	}
 
-	// Setup serf
-	serfLAN, err := s.setupSerf()
+	// get hosts
+	hosts, err := NewHosts("/tmp/hosts")
 	if err != nil {
 		return nil, err
 	}
+	s.hosts = hosts
+	fmt.Println(s.hosts)
+
+	// Setup serf
+	serfLAN, err := s.setupSerf()
+	if err != nil {
+		s.Shutdown()
+		return nil, err
+	}
 	s.serfLAN = serfLAN
+	go s.serfEventHandler()
 
 	// Setup RPC and start listening for requests
 	if err := s.setupRPC(); err != nil {
-		log.Fatal(err)
+		s.Shutdown()
+		return nil, err
 	}
 	go s.listenRPC()
 
@@ -91,6 +108,7 @@ func (s *Server) setupRPC() error {
 }
 
 // listenRPC serves all incoming RPC requests
+// runs in its own goroutine
 func (s *Server) listenRPC() {
 	s.rpcServer.Accept(s.rpcListener)
 	for {
