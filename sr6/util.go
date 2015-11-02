@@ -25,19 +25,19 @@ func OverwriteFile(path, content string) error {
 
 // CorrectHostname ensures that server hostname ends with suffix,
 // and adds random chars before the suffix if we are setting it now.
-func CorrectHostname(suffix string) error {
+func CorrectHostname(suffix string) (string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !strings.HasSuffix(hostname, suffix) {
 		// change hostname.
-		newHostname := RandString(5) + "." + suffix
-		if err := SetHostname(newHostname); err != nil {
-			return err
+		hostname = RandString(5) + "." + suffix
+		if err := SetHostname(hostname); err != nil {
+			return "", err
 		}
 	}
-	return nil
+	return hostname, nil
 }
 
 // SetHostname sets hostname to *name*
@@ -48,7 +48,7 @@ func SetHostname(name string) error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	log.Printf("[INFO] Setting hostname to %s: %q\n", name, out.String())
+	log.Printf("[INFO] Setting hostname to %s\n", name)
 	return nil
 }
 

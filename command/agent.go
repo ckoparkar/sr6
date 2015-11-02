@@ -20,7 +20,15 @@ func (c *AgentCommand) Help() string {
 	helpText := `Usage: sr6 agent [options]
 
   Starts the sr6 agent and runs until an interrupt is received. The
-  agent represents a single node in a cluster.`
+  agent represents a single node in a cluster.
+
+Options:
+
+  -node=HOSTNAME         Node name of the sr6 agent.
+  -leader=false          Sets this node as cluster leader.
+  -hosts-file=/etc/hosts Path of hosts file.
+  -host-suffix=abc.com   Ensures server hostname has suffix *n*.
+`
 	return strings.TrimSpace(helpText)
 }
 
@@ -31,10 +39,15 @@ func (c *AgentCommand) Run(args []string) int {
 		log.Fatal(err)
 	}
 	// ensure that server complies with host-suffix
-	if err := sr6.CorrectHostname(config.HostSuffix); err != nil {
+	hostname, err := sr6.CorrectHostname(config.HostSuffix)
+	if err != nil {
 		log.Fatalf("[ERR] Couldn't set the correct hostname: %#v", err)
 		return 1
 	}
+	// change nodename to match new hostname
+	config.NodeName = hostname
+	config.SerfConfig.NodeName = hostname
+
 	s, err := sr6.NewServer(config)
 	if err != nil {
 		log.Fatalf("[ERR] Couldn't start server: %#v", err)
