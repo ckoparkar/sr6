@@ -30,9 +30,15 @@ func (c *AgentCommand) Run(args []string) int {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// ensure that server complies with host-suffix
+	if err := sr6.CorrectHostname(config.HostSuffix); err != nil {
+		log.Fatalf("[ERR] Couldn't set the correct hostname: %#v", err)
+		return 1
+	}
 	s, err := sr6.NewServer(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[ERR] Couldn't start server: %#v", err)
+		return 1
 	}
 	c.server = s
 	return c.handleSignals()
@@ -65,6 +71,7 @@ func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 	cmdFlags.StringVar(&cmdConfig.NodeName, "node", "", "node name")
 	cmdFlags.BoolVar(&cmdConfig.Leader, "leader", false, "enable server leader node")
 	cmdFlags.StringVar(&cmdConfig.HostsFile, "hosts-file", "/etc/hosts", "hosts file path")
+	cmdFlags.StringVar(&cmdConfig.HostSuffix, "host-suffix", "abc.com", "ensure server has suffix `s`")
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil, err
 	}

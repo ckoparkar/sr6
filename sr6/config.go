@@ -30,6 +30,9 @@ type Config struct {
 
 	// HostsFile points to hosts file. Defaults to /etc/hosts
 	HostsFile string
+
+	// HostSuffix is os.Hostname suffix
+	HostSuffix string
 }
 
 func DefaultConfig() (*Config, error) {
@@ -43,6 +46,7 @@ func DefaultConfig() (*Config, error) {
 		SerfConfig: serf.DefaultConfig(),
 		RPCAddr:    DefaultRPCAddr,
 		HostsFile:  "/etc/hosts",
+		HostSuffix: "abc.com",
 	}
 	c.setupSerfConfig()
 	return c, nil
@@ -69,6 +73,9 @@ func MergeConfig(a, b *Config) *Config {
 	}
 	if b.HostsFile != "" {
 		result.HostsFile = b.HostsFile
+	}
+	if b.HostSuffix != "" {
+		result.HostSuffix = b.HostSuffix
 	}
 	return &result
 }

@@ -60,7 +60,7 @@ func (h *HostsManager) add(ip, hostname string) error {
 	for k, v := range h.hosts {
 		content += fmt.Sprintf("%s %s\n", k, v)
 	}
-	if err := overwriteFile(h.path, content); err != nil {
+	if err := OverwriteFile(h.path, content); err != nil {
 		return err
 	}
 	return nil
@@ -74,7 +74,7 @@ func (h *HostsManager) remove(ip, hostname string) error {
 	for k, v := range h.hosts {
 		content += fmt.Sprintf("%s %s\n", k, v)
 	}
-	if err := overwriteFile(h.path, content); err != nil {
+	if err := OverwriteFile(h.path, content); err != nil {
 		return err
 	}
 	return nil
