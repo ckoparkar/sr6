@@ -24,11 +24,12 @@ func (c *AgentCommand) Help() string {
 
 Options:
 
-  -node=HOSTNAME         Node name of the sr6 agent.
-  -leader=false          Sets this node as cluster leader.
-  -hosts-file=/etc/hosts Path of hosts file.
-  -host-suffix=local     Ensures server hostname has suffix *n*.
-  -host-update=10s       Updates hosts file at *n* intervals.
+  -node=HOSTNAME              Node name of the sr6 agent.
+  -leader=false               Sets this node as cluster leader.
+  -hosts-file=/etc/hosts      Path of hosts file.
+  -host-suffix=local          Ensures server hostname has suffix *n*.
+  -host-update=10s            Updates hosts file at *n* intervals.
+  -ambari-addr=localhost:8400 Address of ambari server.
 `
 	return strings.TrimSpace(helpText)
 }
@@ -37,9 +38,8 @@ func (c *AgentCommand) Run(args []string) int {
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("[ERR] " + err.Error())
 	}
-
 	// ensure that server complies with host-suffix
 	hostname, err := sr6.CorrectHostname(config.HostSuffix)
 	if err != nil {
@@ -80,6 +80,7 @@ func (c *AgentCommand) handleSignals() int {
 // and merges it with the defaults
 func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 	var cmdConfig sr6.Config
+	cmdConfig.AmbariConfig = new(sr6.AmbariConfig)
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 
@@ -87,6 +88,7 @@ func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 	cmdFlags.BoolVar(&cmdConfig.Leader, "leader", false, "enable server leader node")
 	cmdFlags.StringVar(&cmdConfig.HostsFile, "hosts-file", "/etc/hosts", "hosts file path")
 	cmdFlags.StringVar(&cmdConfig.HostSuffix, "host-suffix", "", "ensure server has suffix `s`")
+	cmdFlags.StringVar(&cmdConfig.AmbariConfig.Addr, "ambari-addr", "localhost:8400", "address of ambari server")
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil, err
 	}

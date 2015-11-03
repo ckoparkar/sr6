@@ -37,6 +37,9 @@ type Config struct {
 
 	// HostsUpdateInterval decides when to update hosts file
 	HostsUpdateInterval time.Duration
+
+	// Ambari config
+	AmbariConfig *AmbariConfig
 }
 
 func DefaultConfig() (*Config, error) {
@@ -44,11 +47,16 @@ func DefaultConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	ambariConfig, err := DefaultAmbariConfig()
+	if err != nil {
+		return nil, err
+	}
 	c := &Config{
-		NodeName:   hostname,
-		SerfConfig: serf.DefaultConfig(),
-		RPCAddr:    DefaultRPCAddr,
-		HostsFile:  "/etc/hosts",
+		NodeName:     hostname,
+		SerfConfig:   serf.DefaultConfig(),
+		RPCAddr:      DefaultRPCAddr,
+		AmbariConfig: ambariConfig,
+		HostsFile:    "/etc/hosts",
 
 		HostsUpdateInterval: 10 * time.Second,
 	}
@@ -80,6 +88,9 @@ func MergeConfig(a, b *Config) *Config {
 	}
 	if b.HostSuffix != "" {
 		result.HostSuffix = b.HostSuffix
+	}
+	if b.AmbariConfig.Addr != "" {
+		result.AmbariConfig.Addr = b.AmbariConfig.Addr
 	}
 	return &result
 }

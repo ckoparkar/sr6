@@ -32,9 +32,8 @@ func (s *Server) nodeJoin(me serf.MemberEvent) {
 		}
 		// if we are leader, add host to ambari
 		if s.isLeader() {
-			// 1) bootstrap new node (POST http://localhost:8080/api/v1/bootstrap)
-			// 2) poll till its done
-			// 3) add host (POST /clusters/:clusterName/hosts/:hostName)
+			// 1) add host (POST /clusters/:clusterName/hosts/:hostName)
+			// 2) install storm on the node
 		}
 	}
 }

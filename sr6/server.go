@@ -36,6 +36,9 @@ type Server struct {
 
 	// hosts manages LAN hosts
 	hosts *HostsManager
+
+	// ambari implement its HTTP API
+	ambari *ambari
 }
 
 func NewServer(config *Config) (*Server, error) {
@@ -44,9 +47,10 @@ func NewServer(config *Config) (*Server, error) {
 		eventChLAN: make(chan serf.Event, 256),
 		rpcServer:  rpc.NewServer(),
 		shutdownCh: make(chan struct{}),
+		ambari:     &ambari{config.AmbariConfig},
 	}
 
-	// get hosts
+	// Get hosts
 	hosts, err := NewHostsManager(config.HostsFile)
 	if err != nil {
 		return nil, err
@@ -70,6 +74,9 @@ func NewServer(config *Config) (*Server, error) {
 	}
 	go s.listenRPC()
 
+	if err := s.ambari.listClusters(); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 

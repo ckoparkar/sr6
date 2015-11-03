@@ -1,7 +1,6 @@
 package sr6
 
 import (
-	"bytes"
 	"log"
 	"math/rand"
 	"os"
@@ -43,8 +42,6 @@ func CorrectHostname(suffix string) (string, error) {
 // SetHostname sets hostname to *name*
 func SetHostname(name string) error {
 	cmd := exec.Command("hostname", name)
-	var out bytes.Buffer
-	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
 		return err
 	}
