@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/rpc"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/serf/serf"
 )
@@ -51,6 +52,7 @@ func NewServer(config *Config) (*Server, error) {
 		return nil, err
 	}
 	s.hosts = hosts
+	go s.updateHosts()
 
 	// Setup serf
 	serfLAN, err := s.setupSerf()
@@ -118,6 +120,24 @@ func (s *Server) listenRPC() {
 		log.Printf("[INFO] rpc: Accepted client: %v", conn.RemoteAddr())
 		rpc.ServeConn(conn)
 	}
+}
+
+// updateHosts runs at *interval* and updates host file
+// Runs in its own goroutine
+func (s *Server) updateHosts() {
+	ticker := time.NewTicker(s.config.HostsUpdateInterval)
+	for {
+		select {
+		case <-ticker.C:
+			s.hosts.update(s.serfLAN.Members())
+		case <-s.shutdownCh:
+			return
+		}
+	}
+}
+
+func (s *Server) isLeader() bool {
+	return s.config.Leader
 }
 
 // Shutdown closes all active servers running in background

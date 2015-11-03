@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/hashicorp/serf/serf"
 )
 
 type HostsManager struct {
@@ -56,11 +58,7 @@ func (h *HostsManager) add(ip, hostname string) error {
 	h.Lock()
 	defer h.Unlock()
 	h.hosts[ip] = hostname
-	var content string
-	for k, v := range h.hosts {
-		content += fmt.Sprintf("%s %s\n", k, v)
-	}
-	if err := OverwriteFile(h.path, content); err != nil {
+	if err := OverwriteFile(h.path, h.String()); err != nil {
 		return err
 	}
 	return nil
@@ -70,12 +68,33 @@ func (h *HostsManager) remove(ip, hostname string) error {
 	h.Lock()
 	defer h.Unlock()
 	delete(h.hosts, ip)
+	if err := OverwriteFile(h.path, h.String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *HostsManager) update(members []serf.Member) error {
+	h.Lock()
+	defer h.Unlock()
+	// ensure all alive nodes are in the map. delete all others
+	for _, m := range members {
+		if m.Status == serf.StatusAlive {
+			h.hosts[m.Addr.String()] = m.Name
+		} else {
+			delete(h.hosts, m.Addr.String())
+		}
+	}
+	if err := OverwriteFile(h.path, h.String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *HostsManager) String() string {
 	var content string
 	for k, v := range h.hosts {
 		content += fmt.Sprintf("%s %s\n", k, v)
 	}
-	if err := OverwriteFile(h.path, content); err != nil {
-		return err
-	}
-	return nil
+	return content
 }

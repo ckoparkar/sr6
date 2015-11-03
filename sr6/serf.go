@@ -30,6 +30,12 @@ func (s *Server) nodeJoin(me serf.MemberEvent) {
 		if err := s.hosts.add(m.Addr.String(), m.Name); err != nil {
 			log.Printf("[ERR] Couldn't add host , %#v", err)
 		}
+		// if we are leader, add host to ambari
+		if s.isLeader() {
+			// 1) bootstrap new node (POST http://localhost:8080/api/v1/bootstrap)
+			// 2) poll till its done
+			// 3) add host (POST /clusters/:clusterName/hosts/:hostName)
+		}
 	}
 }
 

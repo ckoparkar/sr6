@@ -27,7 +27,8 @@ Options:
   -node=HOSTNAME         Node name of the sr6 agent.
   -leader=false          Sets this node as cluster leader.
   -hosts-file=/etc/hosts Path of hosts file.
-  -host-suffix=abc.com   Ensures server hostname has suffix *n*.
+  -host-suffix=local     Ensures server hostname has suffix *n*.
+  -host-update=10s       Updates hosts file at *n* intervals.
 `
 	return strings.TrimSpace(helpText)
 }
@@ -38,6 +39,7 @@ func (c *AgentCommand) Run(args []string) int {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// ensure that server complies with host-suffix
 	hostname, err := sr6.CorrectHostname(config.HostSuffix)
 	if err != nil {
@@ -84,7 +86,7 @@ func (c *AgentCommand) readConfig() (*sr6.Config, error) {
 	cmdFlags.StringVar(&cmdConfig.NodeName, "node", "", "node name")
 	cmdFlags.BoolVar(&cmdConfig.Leader, "leader", false, "enable server leader node")
 	cmdFlags.StringVar(&cmdConfig.HostsFile, "hosts-file", "/etc/hosts", "hosts file path")
-	cmdFlags.StringVar(&cmdConfig.HostSuffix, "host-suffix", "abc.com", "ensure server has suffix `s`")
+	cmdFlags.StringVar(&cmdConfig.HostSuffix, "host-suffix", "", "ensure server has suffix `s`")
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil, err
 	}

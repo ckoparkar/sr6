@@ -3,6 +3,7 @@ package sr6
 import (
 	"net"
 	"os"
+	"time"
 
 	"github.com/hashicorp/serf/serf"
 )
@@ -33,6 +34,9 @@ type Config struct {
 
 	// HostSuffix is os.Hostname suffix
 	HostSuffix string
+
+	// HostsUpdateInterval decides when to update hosts file
+	HostsUpdateInterval time.Duration
 }
 
 func DefaultConfig() (*Config, error) {
@@ -42,11 +46,11 @@ func DefaultConfig() (*Config, error) {
 	}
 	c := &Config{
 		NodeName:   hostname,
-		Leader:     false,
 		SerfConfig: serf.DefaultConfig(),
 		RPCAddr:    DefaultRPCAddr,
 		HostsFile:  "/etc/hosts",
-		HostSuffix: "abc.com",
+
+		HostsUpdateInterval: 10 * time.Second,
 	}
 	c.setupSerfConfig()
 	return c, nil
