@@ -1,13 +1,25 @@
 package sr6
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 )
 
 var ErrAmbariCredsError = errors.New("AMBARI_HTTP_AUTH is not set.")
+
+type ListClustersResponse struct {
+	Items []struct {
+		Href     string `json:"href"`
+		Clusters struct {
+			Name    string `json:"cluster_name"`
+			Version string `json:"version"`
+		} `json:"Clusters"`
+	} `json:"items"`
+}
 
 type AmbariConfig struct {
 	// Addr is the server url:port
@@ -28,18 +40,33 @@ func DefaultAmbariConfig() (*AmbariConfig, error) {
 	}, nil
 }
 
-type ambari struct {
+type Ambari struct {
 	config *AmbariConfig
 }
 
-func (a *ambari) listClusters() error {
+func (a *Ambari) ListClusters() (*ListClustersResponse, error) {
 	req := NewRequest("GET", "http", a.config.Addr, "/api/v1/clusters", a.config.Auth, nil, nil)
-	rtt, resp, err := req.Do()
+	_, resp, err := req.Do()
+	if err != nil {
+		return nil, err
+	}
+	var lcr ListClustersResponse
+	body, _ := ioutil.ReadAll(resp.Body)
+	json.Unmarshal(body, &lcr)
+	return &lcr, nil
+}
+
+func (a *Ambari) AddHost(hostname string) error {
+	clusters, err := a.ListClusters()
 	if err != nil {
 		return err
 	}
-	fmt.Println("done in", rtt)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	c := clusters.Items[0]
+	addr := fmt.Sprintf("%s/hosts/%s", c.Href, hostname)
+	req := NewRequest("POST", "http", addr, "", a.config.Auth, nil, nil)
+	_, resp, err := req.Do()
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		return err
+	}
 	return nil
 }

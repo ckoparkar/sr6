@@ -32,7 +32,9 @@ func (s *Server) nodeJoin(me serf.MemberEvent) {
 		}
 		// if we are leader, add host to ambari
 		if s.isLeader() {
-			// 1) add host (POST /clusters/:clusterName/hosts/:hostName)
+			if err := s.ambari.AddHost(m.Name); err != nil {
+				log.Printf("[ERR] Couldnt'add %s: %s", m.Name, err)
+			}
 			// 2) install storm on the node
 		}
 	}

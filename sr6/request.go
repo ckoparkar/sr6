@@ -1,7 +1,9 @@
 package sr6
 
 import (
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,9 +60,25 @@ func (r *Request) Do() (time.Duration, *http.Response, error) {
 	if err != nil {
 		return 0, nil, err
 	}
+	quit := make(chan int, 0)
+	var diff time.Duration
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		log.Printf("[INFO] Running HTTP request %s", req.URL)
+		for {
+			select {
+			case <-quit:
+				fmt.Println(" Done in: ", diff)
+				return
+			case <-ticker.C:
+				fmt.Print(".")
+			}
+		}
+	}()
 	start := time.Now()
 	resp, err := r.client.Do(req)
-	diff := time.Now().Sub(start)
+	diff = time.Now().Sub(start)
+	quit <- 1
 	return diff, resp, err
 }
 
