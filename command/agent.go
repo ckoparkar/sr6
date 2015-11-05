@@ -38,7 +38,7 @@ func (c *AgentCommand) Run(args []string) int {
 	c.args = args
 	config, err := c.readConfig()
 	if err != nil {
-		log.Fatal("[ERR] " + err.Error())
+		return 1
 	}
 	// ensure that server complies with host-suffix
 	hostname, err := sr6.CorrectHostname(config.HostSuffix)
