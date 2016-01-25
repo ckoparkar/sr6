@@ -13,8 +13,8 @@ var ErrAmbariCredsError = errors.New("AMBARI_HTTP_AUTH is not set.")
 
 type ListClustersResponse struct {
 	Items []struct {
-		Href     string `json:"href"`
-		Clusters struct {
+		Href    string `json:"href"`
+		Cluster struct {
 			Name    string `json:"cluster_name"`
 			Version string `json:"version"`
 		} `json:"Clusters"`
@@ -62,8 +62,8 @@ func (a *Ambari) AddHost(hostname string) error {
 		return err
 	}
 	c := clusters.Items[0]
-	addr := fmt.Sprintf("%s/hosts/%s", c.Href, hostname)
-	req := NewRequest("POST", "http", addr, "", a.config.Auth, nil, nil)
+	addr := fmt.Sprintf("/api/v1/clusters/%s/hosts/%s", c.Cluster.Name, hostname)
+	req := NewRequest("POST", "http", a.config.Addr, addr, a.config.Auth, nil, nil)
 	_, resp, err := req.Do()
 	if err != nil || resp.StatusCode != http.StatusCreated {
 		return err
